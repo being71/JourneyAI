@@ -31,3 +31,25 @@ This is a web-based AI storyteller application.
    ```bash
    npm start
    ```
+
+## Python Virtual Environment (venv)
+
+Virtual environment Python telah dibuat di folder `/venv`. Untuk mengaktifkan dan menggunakannya:
+
+### Linux / macOS:
+```bash
+# Membuat venv (jika belum ada)
+python3 -m venv venv
+
+# Mengaktifkan venv
+source venv/bin/activate
+```
+
+### Windows (PowerShell):
+```powershell
+# Membuat venv
+python -m venv venv
+
+# Mengaktifkan venv
+.\venv\Scripts\Activate.ps1
+```
