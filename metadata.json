@@ -1,0 +1,6 @@
+{
+  "name": "Ledger",
+  "description": "Interactive AI novel chat engine with structured storylines, tiered chapter memory summaries, OOC messaging, and token transparency.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
