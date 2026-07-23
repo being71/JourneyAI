@@ -262,6 +262,107 @@ ${session.guidancePrompt ? `PETUNJUK KUSTOM DARI PEMAIN: "${replaceUserTag(sessi
     let inputTokens = 0;
     let outputTokens = 0;
 
+    // Handle Local LLM Requests (Ollama / LM Studio / OpenAI-Compatible)
+    if (session.isLocalLlm || modelName.startsWith('local:')) {
+      const localEndpoint = (session.localLlmEndpoint || 'http://localhost:11434').replace(/\/$/, '');
+      const localModel = session.localLlmModelName || modelName.replace(/^local:/, '') || 'llama3.2';
+      const provider = session.localLlmProvider || 'ollama';
+
+      let handledLocal = false;
+
+      try {
+        if (provider === 'ollama' && !localEndpoint.endsWith('/v1')) {
+          const ollamaMessages = [
+            { role: 'system', content: systemInstruction },
+            ...contents.map(c => ({
+              role: c.role === 'model' ? 'assistant' : 'user',
+              content: c.parts?.[0]?.text || '',
+            })),
+          ];
+
+          const numCtx = session.localLlmNumCtx || 4096;
+
+          const resLocal = await fetch(`${localEndpoint}/api/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: localModel,
+              messages: ollamaMessages,
+              stream: false,
+              options: {
+                temperature,
+                num_ctx: numCtx,
+                num_gpu: 99, // Offload layers to GPU
+              },
+            }),
+          });
+
+          if (resLocal.ok) {
+            const dataLocal = await resLocal.json();
+            replyText = dataLocal.message?.content || '';
+            if (replyText) handledLocal = true;
+          }
+        } else {
+          const openAiUrl = localEndpoint.endsWith('/v1')
+            ? `${localEndpoint}/chat/completions`
+            : `${localEndpoint}/v1/chat/completions`;
+
+          const apiMessages = [
+            { role: 'system', content: systemInstruction },
+            ...contents.map(c => ({
+              role: c.role === 'model' ? 'assistant' : 'user',
+              content: c.parts?.[0]?.text || '',
+            })),
+          ];
+
+          const resLocal = await fetch(openAiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: localModel,
+              messages: apiMessages,
+              temperature,
+            }),
+          });
+
+          if (resLocal.ok) {
+            const dataLocal = await resLocal.json();
+            replyText = dataLocal.choices?.[0]?.message?.content || '';
+            if (replyText) handledLocal = true;
+          }
+        }
+      } catch (err: any) {
+        console.warn(`[Local LLM] Server-side fetch to ${localEndpoint} failed:`, err.message);
+      }
+
+      if (handledLocal) {
+        inputTokens = Math.ceil((systemInstruction.length + JSON.stringify(contents).length) / 4);
+        outputTokens = Math.ceil(replyText.length / 4);
+        return res.json({
+          text: replyText,
+          inputTokens,
+          outputTokens,
+          totalTokens: inputTokens + outputTokens,
+          modelUsed: `Local LLM (${localModel})`,
+          isLocalLlm: true,
+        });
+      }
+
+      // If server-side fetch failed, instruct client to fetch directly from browser
+      return res.json({
+        fallbackToClient: true,
+        localEndpoint,
+        localModel,
+        provider,
+        systemInstruction,
+        messagesFormatted: contents.map(c => ({
+          role: c.role === 'model' ? 'assistant' : 'user',
+          content: c.parts?.[0]?.text || '',
+        })),
+        temperature,
+      });
+    }
+
     if (modelName === 'sao10k/llama-3.1-8b-stheno-v3.4') {
       const apiKey = process.env.OPENROUTER_API_KEY || process.env.HF_TOKEN;
       let handledExternally = false;

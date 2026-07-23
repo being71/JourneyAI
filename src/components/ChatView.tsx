@@ -16,7 +16,9 @@ import {
   Layers,
   AlertTriangle,
   Check,
-  Feather
+  Feather,
+  Laptop,
+  Cloud
 } from 'lucide-react';
 import { ChapterSummary, ChatMessage, ChatSession, Storyline } from '../types';
 import { ReaderSettings } from '../utils/storage';
@@ -349,10 +351,32 @@ export const ChatView: React.FC<ChatViewProps> = ({
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 max-w-4xl mx-auto w-full">
         {/* Story Intro Header */}
         <div className={`p-6 rounded-2xl border ${cardBg} space-y-3`}>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
-              {storyline.ratingTag}
-            </span>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                {storyline.ratingTag}
+              </span>
+
+              {/* Active Engine Badge */}
+              <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border flex items-center gap-1 font-mono ${
+                session.isLocalLlm
+                  ? 'bg-emerald-950 text-emerald-300 border-emerald-600'
+                  : 'bg-cyan-950 text-cyan-300 border-cyan-600'
+              }`}>
+                {session.isLocalLlm ? (
+                  <>
+                    <Laptop className="w-3 h-3 text-emerald-400" />
+                    LOKAL LLM ({session.localLlmModelName || session.selectedModel.replace('local:', '')})
+                  </>
+                ) : (
+                  <>
+                    <Cloud className="w-3 h-3 text-cyan-400" />
+                    CLOUD API ({session.selectedModel})
+                  </>
+                )}
+              </span>
+            </div>
+
             <span className="text-xs text-slate-400">
               Pemain: <strong className="text-emerald-400">{session.playerName}</strong>
             </span>
@@ -451,6 +475,16 @@ export const ChatView: React.FC<ChatViewProps> = ({
                   {msg.isOOC && (
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-950/80 text-amber-300 border border-amber-800 font-mono">
                       [OOC / メタ]
+                    </span>
+                  )}
+
+                  {!isUser && (
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border font-mono ${
+                      session.isLocalLlm
+                        ? 'bg-emerald-950/80 text-emerald-300 border-emerald-600/80'
+                        : 'bg-cyan-950/80 text-cyan-300 border-cyan-600/80'
+                    }`}>
+                      {session.isLocalLlm ? '💻 LOKAL' : '☁️ CLOUD'}
                     </span>
                   )}
 

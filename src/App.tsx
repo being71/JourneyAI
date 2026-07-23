@@ -45,6 +45,8 @@ import { SettingsDrawer } from './components/SettingsDrawer';
 import { BranchingModal } from './components/BranchingModal';
 import { ImportExportModal } from './components/ImportExportModal';
 import { GuidancePromptModal } from './components/GuidancePromptModal';
+import { LocalLlmGuideModal } from './components/LocalLlmGuideModal';
+import { queryLocalLlmDirectly } from './utils/localLlmDetector';
 
 export default function App() {
   // --- Persistent States ---
@@ -65,6 +67,7 @@ export default function App() {
   const [isBranchingOpen, setIsBranchingOpen] = useState(false);
   const [isImportExportOpen, setIsImportExportOpen] = useState(false);
   const [isGuidanceModalOpen, setIsGuidanceModalOpen] = useState(false);
+  const [isLocalLlmGuideOpen, setIsLocalLlmGuideOpen] = useState(false);
   const [editingStoryline, setEditingStoryline] = useState<Storyline | null>(null);
 
   // --- Chat Loading State ---
@@ -239,11 +242,29 @@ export default function App() {
 
       const data = await response.json();
 
+      let assistantText = data.text;
+
+      // Handle Client-side fallback if Local LLM endpoint is on user's machine
+      if (data.fallbackToClient) {
+        try {
+          assistantText = await queryLocalLlmDirectly({
+            endpoint: data.localEndpoint,
+            provider: data.provider,
+            modelName: data.localModel,
+            systemInstruction: data.systemInstruction,
+            messages: data.messagesFormatted,
+            temperature: data.temperature,
+          });
+        } catch (localErr: any) {
+          throw new Error(`Tidak dapat terhubung ke LLM Lokal (${data.localEndpoint}). Pastikan Ollama / LM Studio berjalan dengan CORS (*): ${localErr.message}`);
+        }
+      }
+
       const assistantMsg: ChatMessage = {
         id: `msg-ai-${Date.now()}`,
         sessionId: activeSession.id,
         role: 'assistant',
-        content: data.text,
+        content: assistantText,
         timestamp: Date.now(),
       };
 
@@ -590,6 +611,7 @@ export default function App() {
             setReaderSettings(updated);
             saveReaderSettings(updated);
           }}
+          onOpenLocalLlmGuide={() => setIsLocalLlmGuideOpen(true)}
         />
       )}
 
@@ -629,6 +651,13 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Local LLM Installation & Configuration Guide Modal */}
+      <LocalLlmGuideModal
+        isOpen={isLocalLlmGuideOpen}
+        onClose={() => setIsLocalLlmGuideOpen(false)}
+        onDetectNow={() => setIsSettingsOpen(true)}
+      />
     </div>
   );
 }

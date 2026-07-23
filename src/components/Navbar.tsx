@@ -13,7 +13,9 @@ import {
   Sun,
   Moon,
   Coffee,
-  Bookmark
+  Bookmark,
+  Laptop,
+  Cloud
 } from 'lucide-react';
 import { ChatSession, Storyline } from '../types';
 import { ReaderSettings } from '../utils/storage';
@@ -110,6 +112,38 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {activeSession && (
             <>
+              {/* Active Model Engine Badge (Cloud API vs Local LLM) */}
+              <button
+                onClick={onOpenSettings}
+                className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-xl border transition ${
+                  activeSession.isLocalLlm
+                    ? 'bg-emerald-950/80 hover:bg-emerald-900 border-emerald-500/80 text-emerald-200 font-bold shadow-sm shadow-emerald-500/20'
+                    : 'bg-cyan-950/60 hover:bg-cyan-900/80 border-cyan-600/70 text-cyan-200 font-medium'
+                }`}
+                title={
+                  activeSession.isLocalLlm
+                    ? `Engine Aktif: Local LLM (${activeSession.localLlmModelName || activeSession.selectedModel})`
+                    : `Engine Aktif: Cloud API (${activeSession.selectedModel})`
+                }
+              >
+                {activeSession.isLocalLlm ? (
+                  <>
+                    <Laptop className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <span className="hidden lg:inline font-mono text-[11px] truncate max-w-[120px]">
+                      {activeSession.localLlmModelName || activeSession.selectedModel.replace('local:', '')}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Cloud className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <span className="hidden lg:inline font-mono text-[11px] truncate max-w-[110px]">
+                      {activeSession.selectedModel.replace('gemini-', '')}
+                    </span>
+                  </>
+                )}
+              </button>
+
               {/* Token Transparency Drawer Trigger */}
               <button
                 onClick={onOpenTokenDrawer}

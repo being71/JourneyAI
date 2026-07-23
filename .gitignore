@@ -6,12 +6,3 @@ coverage/
 *.log
 .env*
 !.env.example
-
-# Models
-models/
-*.gguf
-*.bin
-*.safetensors
-*.onnx
-*.pt
-*.pth

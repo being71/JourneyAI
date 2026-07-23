@@ -15,7 +15,8 @@ export type ModelProvider =
   | 'gemini-3.6-flash'
   | 'gemini-3.1-pro-preview'
   | 'gemini-3.1-flash-lite'
-  | 'sao10k/llama-3.1-8b-stheno-v3.4';
+  | 'sao10k/llama-3.1-8b-stheno-v3.4'
+  | string;
 
 export interface CharacterProfile {
   id: string;
@@ -145,6 +146,14 @@ export interface ChatSession {
   promptMode: PromptMode;
   selectedModel: ModelProvider;
   contextLimitTokens: number; // Override limit, e.g., 16000
+  
+  // Local LLM Config
+  isLocalLlm?: boolean;
+  localLlmEndpoint?: string; // e.g. 'http://localhost:11434' or 'http://localhost:1234/v1'
+  localLlmProvider?: 'ollama' | 'lmstudio' | 'openai-compatible' | 'koboldcpp';
+  localLlmModelName?: string;
+  localLlmVramPreset?: '8gb' | '4gb' | '16gb' | 'custom';
+  localLlmNumCtx?: number; // Context window for 8GB VRAM optimization (default 4096)
   
   // Game Sheet state
   gameSheet?: GameSheet;
